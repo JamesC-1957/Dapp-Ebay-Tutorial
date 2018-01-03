@@ -16,9 +16,34 @@ const ipfs = ipfsAPI({host: 'localhost', port: '5001', protocol: 'http'});
 window.App = {
  start: function() {
   var self = this;
+
+  EcommerceStore.setProvider(web3.currentProvider);
+  renderStore();
  },
 
 };
+function renderStore() {
+ EcommerceStore.deployed().then(function(i) {
+  i.getProduct.call(1).then(function(p) {
+   $("#product-list").append(buildProduct(p));
+  });
+  i.getProduct.call(2).then(function(p) {
+   $("#product-list").append(buildProduct(p));
+  });
+ });
+}
+
+function buildProduct(product) {
+ let node = $("<div/>");
+ node.addClass("col-sm-3 text-center col-margin-bottom-1");
+ node.append("<img src='https://ipfs.io/ipfs/" + product[3] + "' width='150px' />");
+ node.append("<div>" + product[1]+ "</div>");
+ node.append("<div>" + product[2]+ "</div>");
+ node.append("<div>" + product[5]+ "</div>");
+ node.append("<div>" + product[6]+ "</div>");
+ node.append("<div>Ether " + product[7] + "</div>");
+ return node;
+}
 
 window.addEventListener('load', function() {
  // Checking if Web3 has been injected by the browser (Mist/MetaMask)
