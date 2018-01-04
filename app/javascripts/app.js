@@ -20,6 +20,16 @@ window.App = {
 
   EcommerceStore.setProvider(web3.currentProvider);
   renderStore();
+  $("#add-item-to-store").submit(function(event) {
+     const req = $("#add-item-to-store").serialize();
+     let params = JSON.parse('{"' + req.replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+     let decodedParams = {}
+     Object.keys(params).forEach(function(v) {
+      decodedParams[v] = decodeURIComponent(decodeURI(params[v]));
+     });
+     saveProduct(reader, decodedParams);
+     event.preventDefault();
+  });
 
   $("#product-image").change(function(event) {
     const file = event.target.files[0]
@@ -28,7 +38,31 @@ window.App = {
   });
  },
 };
+function saveProduct(reader, decodedParams) {
+  let imageId, descId;
+  saveImageOnIpfs(reader).then(function(id) {
+    imageId = id;
+    saveTextBlobOnIpfs(decodedParams["product-description"]).then(function(id) {
+      descId = id;
+       saveProductToBlockchain(decodedParams, imageId, descId);
+    })
+ })
+}
 
+function saveProductToBlockchain(params, imageId, descId) {
+  console.log(params);
+  let auctionStartTime = Date.parse(params["product-auction-start"]) / 1000;
+  let auctionEndTime = auctionStartTime + parseInt(params["product-auction-end"]) * 24 * 60 * 60
+
+  EcommerceStore.deployed().then(function(i) {
+    i.addProductToStore(params["product-name"], params["product-category"], imageId, descId, auctionStartTime,
+   auctionEndTime, web3.toWei(params["product-price"], 'ether'), parseInt(params["product-condition"]), {from: web3.eth.accounts[0], gas: 440000}).then(function(f) {
+   console.log(f);
+   $("#msg").show();
+   $("#msg").html("Your product was successfully added to your store!");
+  })
+ });
+}
 
 function saveImageOnIpfs(reader) {
  return new Promise(function(resolve, reject) {
