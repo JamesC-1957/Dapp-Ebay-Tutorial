@@ -161,5 +161,14 @@ contract EcommerceStore {
   function escrowInfo(uint _productId) view public returns (address, address, address, bool, uint, uint) {
   return Escrow(productEscrow[_productId]).escrowInfo();
   }
+  
+  function releaseAmountToSeller(uint _productId) public {
+    Escrow(productEscrow[_productId]).releaseAmountToSeller(msg.sender);
+  }
+
+  function refundAmountToBuyer(uint _productId) public {
+    Escrow(productEscrow[_productId]).refundAmountToBuyer(msg.sender);
+  }
+
 
 }

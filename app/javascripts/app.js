@@ -94,6 +94,34 @@ window.App = {
     });
     event.preventDefault();
   });
+  $("#release-funds").click(function() {
+   let productId = new URLSearchParams(window.location.search).get('id');
+   EcommerceStore.deployed().then(function(f) {
+    $("#msg").html("Your transaction has been submitted. Please wait for few seconds for the confirmation").show();
+    console.log(productId);
+    f.releaseAmountToSeller(productId, {from: web3.eth.accounts[0], gas: 440000}).then(function(f) {
+     console.log(f);
+     location.reload();
+    }).catch(function(e) {
+     console.log(e);
+    })
+   });
+  });
+
+  $("#refund-funds").click(function() {
+   let productId = new URLSearchParams(window.location.search).get('id');
+   EcommerceStore.deployed().then(function(f) {
+    $("#msg").html("Your transaction has been submitted. Please wait for few seconds for the confirmation").show();
+    f.refundAmountToBuyer(productId, {from: web3.eth.accounts[0], gas: 440000}).then(function(f) {
+     console.log(f);
+     location.reload();
+    }).catch(function(e) {
+     console.log(e);
+    })
+   });
+
+   alert("refund the funds!");
+  });
  },
 };
 
@@ -259,7 +287,30 @@ function renderProductDetails(productId) {
   $("#revealing, #bidding, #finalize-auction, #escrow-info").hide();
   let currentTime = getCurrentTimeInSeconds();
    if (parseInt(p[8]) == 1) {
-  $("#product-status").html("Product sold");
+  //$("#product-status").html("Product sold");
+  EcommerceStore.deployed().then(function(i) {
+    $("#escrow-info").show();
+    i.highestBidderInfo.call(productId).then(function(f) {
+     if (f[2].toLocaleString() == '0') {
+      $("#product-status").html("Auction has ended. No bids were revealed");
+     } else {
+      $("#product-status").html("Auction has ended. Product sold to " + f[0] + " for " + displayPrice(f[2]) +
+       "The money is in the escrow. Two of the three participants (Buyer, Seller and Arbiter) have to " +
+       "either release the funds to seller or refund the money to the buyer");
+     }
+    })
+    i.escrowInfo.call(productId).then(function(f) {
+     $("#buyer").html('Buyer: ' + f[0]);
+     $("#seller").html('Seller: ' + f[1]);
+     $("#arbiter").html('Arbiter: ' + f[2]);
+     if(f[3] == true) {
+      $("#release-count").html("Amount from the escrow has been released");
+     } else {
+      $("#release-count").html(f[4] + " of 3 participants have agreed to release funds");
+      $("#refund-count").html(f[5] + " of 3 participants have agreed to refund the buyer");
+     }
+    })
+   })
   } else if(parseInt(p[8]) == 2) {
   $("#product-status").html("Product was not sold");
   } else if(currentTime < parseInt(p[6])) {
