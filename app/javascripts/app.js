@@ -16,12 +16,49 @@ const ipfs = ipfsAPI({host: 'localhost', port: '5001', protocol: 'http'});
 window.App = {
  start: function() {
   var self = this;
+  var reader;
 
   EcommerceStore.setProvider(web3.currentProvider);
   renderStore();
- },
 
+  $("#product-image").change(function(event) {
+    const file = event.target.files[0]
+    reader = new window.FileReader()
+    reader.readAsArrayBuffer(file)
+  });
+ },
 };
+
+
+function saveImageOnIpfs(reader) {
+ return new Promise(function(resolve, reject) {
+  const buffer = Buffer.from(reader.result);
+  ipfs.add(buffer)
+  .then((response) => {
+   console.log(response)
+   resolve(response[0].hash);
+  }).catch((err) => {
+   console.error(err)
+   reject(err);
+  })
+ })
+}
+
+function saveTextBlobOnIpfs(blob) {
+ return new Promise(function(resolve, reject) {
+  const descBuffer = Buffer.from(blob, 'utf-8');
+  ipfs.add(descBuffer)
+  .then((response) => {
+   console.log(response)
+   resolve(response[0].hash);
+  }).catch((err) => {
+   console.error(err)
+   reject(err);
+  })
+ })
+}
+
+
 function renderStore() {
  EcommerceStore.deployed().then(function(i) {
   i.getProduct.call(1).then(function(p) {
