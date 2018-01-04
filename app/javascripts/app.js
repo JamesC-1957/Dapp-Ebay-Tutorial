@@ -75,6 +75,25 @@ window.App = {
      });
      event.preventDefault();
   });
+  $("#finalize-auction").submit(function(event) {
+    $("#msg").hide();
+    let productId = $("#product-id").val();
+    EcommerceStore.deployed().then(function(i) {
+    i.finalizeAuction(parseInt(productId), {from: web3.eth.accounts[2], gas: 4400000}).then(
+     function(f) {
+     $("#msg").show();
+     $("#msg").html("The auction has been finalized and winner declared.");
+     console.log(f)
+     location.reload();
+     }
+    ).catch(function(e) {
+     console.log(e);
+     $("#msg").show();
+     $("#msg").html("The auction can not be finalized by the buyer or seller, only a third party aribiter can finalize it");
+    })
+    });
+    event.preventDefault();
+  });
  },
 };
 
@@ -218,6 +237,40 @@ function buildProduct(product) {
  node.append("<div>" + product[6]+ "</div>");
  node.append("<div>Ether " + product[7] + "</div>");
  return node;
+}
+function renderProductDetails(productId) {
+ EcommerceStore.deployed().then(function(i) {
+ i.getProduct.call(productId).then(function(p) {
+  console.log(p);
+  let content = "";
+  ipfs.cat(p[4]).then(function(stream) {
+  stream.on('data', function(chunk) {
+  // do stuff with this chunk of data
+  content += chunk.toString();
+  $("#product-desc").append("<div>" + content+ "</div>");
+  })
+  });
+
+  $("#product-image").append("<img src='https://ipfs.io/ipfs/" + p[3] + "' width='250px' />");
+  $("#product-price").html(displayPrice(p[7]));
+  $("#product-name").html(p[1].name);
+  $("#product-auction-end").html(displayEndHours(p[6]));
+  $("#product-id").val(p[0]);
+  $("#revealing, #bidding, #finalize-auction, #escrow-info").hide();
+  let currentTime = getCurrentTimeInSeconds();
+   if (parseInt(p[8]) == 1) {
+  $("#product-status").html("Product sold");
+  } else if(parseInt(p[8]) == 2) {
+  $("#product-status").html("Product was not sold");
+  } else if(currentTime < parseInt(p[6])) {
+  $("#bidding").show();
+  } else if (currentTime < (parseInt(p[6]) + 600)) {
+  $("#revealing").show();
+  } else {
+  $("#finalize-auction").show();
+  }
+ })
+ })
 }
 
 window.addEventListener('load', function() {
