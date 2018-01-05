@@ -17,13 +17,10 @@ window.App = {
  start: function() {
   var self = this;
   var reader;
-  if($("#product-details").length > 0) {
-     //This is product details page
-     let productId = new URLSearchParams(window.location.search).get('id');
-     renderProductDetails(productId);
-    }
+
   EcommerceStore.setProvider(web3.currentProvider);
   renderStore();
+
   $("#add-item-to-store").submit(function(event) {
      const req = $("#add-item-to-store").serialize();
      let params = JSON.parse('{"' + req.replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
@@ -122,37 +119,42 @@ window.App = {
 
    alert("refund the funds!");
   });
+  if($("#product-details").length > 0) {
+    //This is product details page
+    let productId = new URLSearchParams(window.location.search).get('id');
+    renderProductDetails(productId);
+  }
  },
 };
 
-function renderProductDetails(productId) {
- EcommerceStore.deployed().then(function(i) {
-  i.getProduct.call(productId).then(function(p) {
-   console.log(p);
-   let content = "";
-   ipfs.cat(p[4]).then(function(stream) {
-    stream.on('data', function(chunk) {
-    // do stuff with this chunk of data
-    content += chunk.toString();
-    $("#product-desc").append("<div>" + content+ "</div>");
-    })
-   });
-
-   $("#product-image").append("<img src='https://ipfs.io/ipfs/" + p[3] + "' width='250px' />");
-   $("#product-price").html(displayPrice(p[7]));
-   $("#product-name").html(p[1].name);
-   $("#product-auction-end").html(displayEndHours(p[6]));
-   $("#product-id").val(p[0]);
-   $("#revealing, #bidding").hide();
-   let currentTime = getCurrentTimeInSeconds();
-   if(currentTime < p[6]) {
-    $("#bidding").show();
-   } else if (currentTime - (60) < p[6]) {
-    $("#revealing").show();
-   }
-  })
- })
-}
+// function renderProductDetails(productId) {
+//  EcommerceStore.deployed().then(function(i) {
+//   i.getProduct.call(productId).then(function(p) {
+//    console.log(p);
+//    let content = "";
+//    ipfs.cat(p[4]).then(function(stream) {
+//     stream.on('data', function(chunk) {
+//     // do stuff with this chunk of data
+//     content += chunk.toString();
+//     $("#product-desc").append("<div>" + content+ "</div>");
+//     })
+//    });
+//
+//    $("#product-image").append("<img src='https://ipfs.io/ipfs/" + p[3] + "' width='250px' />");
+//    $("#product-price").html(displayPrice(p[7]));
+//    $("#product-name").html(p[1].name);
+//    $("#product-auction-end").html(displayEndHours(p[6]));
+//    $("#product-id").val(p[0]);
+//    $("#revealing, #bidding").hide();
+//    let currentTime = getCurrentTimeInSeconds();
+//    if(currentTime < p[6]) {
+//     $("#bidding").show();
+//    } else if (currentTime - (60) < p[6]) {
+//     $("#revealing").show();
+//    }
+//   })
+//  })
+// }
 function getCurrentTimeInSeconds(){
  return Math.round(new Date() / 1000);
 }
@@ -286,7 +288,7 @@ function renderProductDetails(productId) {
   $("#product-id").val(p[0]);
   $("#revealing, #bidding, #finalize-auction, #escrow-info").hide();
   let currentTime = getCurrentTimeInSeconds();
-   if (parseInt(p[8]) == 1) {
+  if (parseInt(p[8]) == 1) {
   //$("#product-status").html("Product sold");
   EcommerceStore.deployed().then(function(i) {
     $("#escrow-info").show();
