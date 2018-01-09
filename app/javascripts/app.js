@@ -10,7 +10,8 @@ var EcommerceStore = contract(ecommerce_store_artifacts);
 
 const ipfsAPI = require('ipfs-api');
 const ethUtil = require('ethereumjs-util');
-
+const offchainServer = "http://localhost:3000";
+const categories = ['Art','Books'];
 const ipfs = ipfsAPI({host: 'localhost', port: '5001', protocol: 'http'});
 
 window.App = {
@@ -244,17 +245,38 @@ function saveTextBlobOnIpfs(blob) {
   })
  })
 }
-
+function renderProducts(div, filters) {
+ $.ajax({
+  url: offchainServer + "/products",
+  type: 'get',
+  contentType: "application/json; charset=utf-8",
+  data: filters
+ }).done(function(data) {
+  if (data.length == 0) {
+   $("#" + div).html('No products found');
+  } else {
+   $("#" + div).html('');
+  }
+  while(data.length > 0) {
+   let chunks = data.splice(0, 4);
+   let row = $("<div/>");
+   row.addClass("row");
+   chunks.forEach(function(value) {
+    let node = buildProduct(value);
+    row.append(node);
+   })
+   $("#" + div).append(row);
+  }
+ })
+}
 
 function renderStore() {
- EcommerceStore.deployed().then(function(i) {
-  i.getProduct.call(1).then(function(p) {
-   $("#product-list").append(buildProduct(p));
-  });
-  i.getProduct.call(2).then(function(p) {
-   $("#product-list").append(buildProduct(p));
-  });
- });
+  renderProducts("product-list", {});
+  renderProducts("product-reveal-list", {productStatus: "reveal"});
+  renderProducts("product-finalize-list", {productStatus: "finalize"});
+  categories.forEach(function(value) {
+   $("#categories").append("<div>" + value + "");
+  })
 }
 
 function buildProduct(product) {
