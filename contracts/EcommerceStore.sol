@@ -1,5 +1,5 @@
 pragma solidity ^0.4.13;
-
+import "contracts/Escrow.sol";
 contract EcommerceStore {
   enum ProductStatus { Open, Sold, Unsold } // types can be converted as integer
   enum ProductCondition { New, Used }
@@ -113,11 +113,11 @@ contract EcommerceStore {
     return result;
   }
 
-
   function EcommerceStore() public {
     productIndex = 0;
-
   }
+  event NewProduct(uint _productId, string _name, string _category, string _imageLink, string _descLink, uint _auctionStartTime, uint _auctionEndTime, uint _startPrice, uint _productCondition);
+
   function addProductToStore(string _name, string _category, string _imageLink, string _descLink, uint _auctionStartTime,
   uint _auctionEndTime, uint _startPrice, uint _productCondition) public {
     require (_auctionStartTime < _auctionEndTime); // validation
@@ -125,8 +125,8 @@ contract EcommerceStore {
     Product memory product = Product(productIndex, _name, _category, _imageLink, _descLink, _auctionStartTime, _auctionEndTime, _startPrice, 0, 0, 0, 0, ProductStatus.Open, ProductCondition(_productCondition)); //Use memory keyword as temporary variable
     stores[msg.sender][productIndex] = product;
     productIdInStore[productIndex] = msg.sender;
+    NewProduct(productIndex, _name, _category, _imageLink, _descLink, _auctionStartTime, _auctionEndTime, _startPrice, _productCondition);
   }
-
   function getProduct(uint _productId) view public returns (uint, string, string, string, string, uint, uint, uint, ProductStatus, ProductCondition) {
     Product memory product = stores[productIdInStore[_productId]][_productId];
     return (product.id, product.name, product.category, product.imageLink, product.descLink, product.auctionStartTime, product.auctionEndTime, product.startPrice, product.status, product.condition);
@@ -161,14 +161,5 @@ contract EcommerceStore {
   function escrowInfo(uint _productId) view public returns (address, address, address, bool, uint, uint) {
   return Escrow(productEscrow[_productId]).escrowInfo();
   }
-  
-  function releaseAmountToSeller(uint _productId) public {
-    Escrow(productEscrow[_productId]).releaseAmountToSeller(msg.sender);
-  }
-
-  function refundAmountToBuyer(uint _productId) public {
-    Escrow(productEscrow[_productId]).refundAmountToBuyer(msg.sender);
-  }
-
 
 }

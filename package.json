@@ -35,6 +35,8 @@
     "webpack-dev-server": "^2.3.0",
     "ethereumjs-util": "5.1.2",
     "ipfs-api": "14.1.2",
-    "mongoose": "4.11.7"
+    "mongoose": "4.11.7",
+    "express": "4.15.4",
+    "nodemon": "^1.11.0"
   }
 }
